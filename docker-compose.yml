@@ -1,0 +1,76 @@
+services:
+  es01:
+    build:
+      context: ./es
+      dockerfile: Dockerfile
+    container_name: diploma_es
+    environment:
+      - node.name=es01
+      - cluster.name=diploma-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+#    ports:
+#      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.3.0
+    container_name: diploma_kibana
+    ports:
+      - "127.0.0.1:5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+    depends_on:
+      - es01
+    networks:
+      - elastic
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: diploma_api
+    volumes:
+      - ./app:/code
+    ports:
+      - "127.0.0.1:8003:8000"
+    environment:
+      - ELASTIC_URL=http://es01:9200
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - es01
+    networks:
+      - elastic
+
+  etl:
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: diploma_etl
+    command: tail -f /dev/null
+    environment:
+      - ELASTIC_URL=http://es01:9200
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./etl:/code/etl
+    depends_on:
+      - es01
+    networks:
+      - elastic
+
+volumes:
+  es_data:
+
+networks:
+  elastic:
+    driver: bridge
