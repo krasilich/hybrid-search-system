@@ -40,9 +40,6 @@ def calc_cl_mrr(results, relevant_en_keywords):
             return 1.0 / (i + 1)
     return 0.0
 
-# ==========================================
-# Експеримент 1: Вплив QAM (Precision@15)
-# ==========================================
 def experiment_1_qam_effect():
     print("\n" + "="*60)
     print("ЕКСПЕРИМЕНТ 1: Вплив QAM (Оцінка Precision@15)")
@@ -62,11 +59,7 @@ def experiment_1_qam_effect():
 
     print(f"\nЗ QAM (Precision@{k} = {p_with_qam:.2f}):")
     print(f"  Знайдено товарів: {len(res_with_qam)}")
-    print(f"\nВисновок: Без QAM система почала підмішувати інші бренди, зменшивши точність. QAM зберіг 100% точність.")
 
-# ==========================================
-# Експеримент 2: Крос-лінгвальний пошук (CL-MRR)
-# ==========================================
 def experiment_2_cross_lingual():
     print("\n" + "="*60)
     print("ЕКСПЕРИМЕНТ 2: Cross-lingual Search (Оцінка CL-MRR)")
@@ -75,7 +68,6 @@ def experiment_2_cross_lingual():
     relevant_keywords = ["space", "trek", "star", "spaceship", "rocket", "shuttle", "falcon", "equinox", "mothership"]
     k = 3
 
-    # КАЛІБРУВАННЯ ВАГ: Зменшуємо вагу BM25 (alpha=0.03), щоб збалансувати скори
     modes = {"Тільки BM25 (alpha=1.0)": 1.0, "Тільки Вектор (alpha=0.0)": 0.0, "Гібрид (Відкалібрований, alpha=0.03)": 0.03}
 
     for name, alpha in modes.items():
@@ -85,23 +77,18 @@ def experiment_2_cross_lingual():
         for i, r in enumerate(results[:k]):
             print(f"  {i+1}. {r['title_en'][:50]} (Score: {r['debug_info']['final_score']})")
 
-# ==========================================
-# Експеримент 3: Business Reranking (Rev@K)
-# ==========================================
 def experiment_3_business_impact():
     print("\n" + "="*60)
     print("ЕКСПЕРИМЕНТ 3: Вплив Business Reranking (Оцінка Rev@5)")
     print("="*60)
 
     test_query = "barbie"
-    fetch_k = 20 # ТЯГНЕМО З БАЗИ 20 ТОВАРІВ
-    eval_k = 5   # АЛЕ ОЦІНЮЄМО І ПОКАЗУЄМО ТІЛЬКИ ТОП-5
+    fetch_k = 20
+    eval_k = 5
 
-    # Виконуємо запит на більшу кількість
     res_base = run_search(test_query, alpha=0.5, apply_biz=False, top_k=fetch_k)
     res_biz = run_search(test_query, alpha=0.5, apply_biz=True, top_k=fetch_k)
 
-    # Рахуємо прибуток тільки для перших 5
     rev_base = calc_expected_revenue(res_base, eval_k)
     rev_biz = calc_expected_revenue(res_biz, eval_k)
 
